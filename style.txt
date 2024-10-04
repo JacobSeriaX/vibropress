@@ -1,0 +1,336 @@
+/* Общий стиль */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f0f4f8;
+    color: #333;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+header {
+    background-color: #002144; /* Синий цвет */
+    width: 100%;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+    max-width: 150px; /* Увеличенный размер логотипа */
+}
+
+h1 {
+    margin: 20px 0;
+    font-size: 36px;
+    color: #0056b3; /* Темно-синий цвет */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Новый стиль поиска и фильтрации */
+.search-filter {
+    display: flex;
+    justify-content: space-between;
+    width: 90%;
+    max-width: 800px;
+    margin-bottom: 20px;
+}
+
+.search-bar input {
+    padding: 10px;
+    font-size: 16px;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-right: 10px;
+}
+
+.filter-sort {
+    display: flex;
+    align-items: center;
+}
+
+.filter-sort select {
+    padding: 10px;
+    font-size: 16px;
+    margin-left: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.container {
+    display: flex;
+    justify-content: space-between;
+    width: 90%;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.orders-column {
+    width: 48%;
+    padding: 20px;
+    background-color: #e6f2ff; /* Светло-голубой фон */
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.section-title {
+    font-size: 24px;
+    color: #007BFF; /* Синий цвет */
+    margin-bottom: 15px;
+    border-bottom: 2px solid #007BFF;
+    padding-bottom: 5px;
+}
+
+.order {
+    background-color: #fff;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    position: relative;
+}
+
+.order:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.order.ready {
+    background-color: #48bb78; /* Зеленый цвет для готовых заказов */
+    color: white;
+}
+
+/* Кнопка удаления заказа */
+.order button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: transparent;
+    border: none;
+    color: #007BFF; /* Синий цвет */
+    font-size: 16px;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.order button:hover {
+    color: #0056b3; /* Темно-синий цвет при наведении */
+}
+
+/* Анимации мигания для дедлайна */
+.blink-yellow {
+    animation: blink-yellow 1s infinite;
+}
+
+.blink-red {
+    animation: blink-red 1s infinite;
+}
+
+.blink-maroon {
+    animation: blink-maroon 1s infinite;
+}
+
+@keyframes blink-yellow {
+    0%, 100% { background-color: #fff3cd; color: #856404; } /* Светло-желтый */
+    50% { background-color: #fff; color: #856404; }
+}
+
+@keyframes blink-red {
+    0%, 100% { background-color: #f8d7da; color: #721c24; } /* Светло-красный */
+    50% { background-color: #fff; color: #721c24; }
+}
+
+@keyframes blink-maroon {
+    0%, 100% { background-color: #f5c6cb; color: #721c24; } /* Светло-бордовый */
+    50% { background-color: #fff; color: #721c24; }
+}
+
+/* Новые стили для отображения платежной информации */
+.outstanding {
+    color: #e53e3e; /* Красный цвет для задолженности */
+    font-weight: bold;
+}
+
+.deposit-paid {
+    color: #38a169; /* Зеленый цвет для залога */
+    font-weight: bold;
+}
+
+/* Кнопки */
+.btn {
+    padding: 12px 24px;
+    background-color: #007BFF; /* Синий цвет */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    width: auto;
+    max-width: 200px;
+    display: block;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.btn:hover {
+    background-color: #0056b3; /* Темно-синий цвет при наведении */
+    transform: translateY(-2px);
+}
+
+/* Модальные окна */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 20px;
+    width: 50%;
+    max-width: 500px; /* Увеличенная ширина модального окна */
+    text-align: center;
+    position: relative;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.4s ease;
+}
+
+.close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #007BFF; /* Синий цвет */
+    transition: color 0.3s;
+}
+
+.close:hover {
+    color: #0056b3; /* Темно-синий цвет при наведении */
+}
+
+/* Стиль для отображения информации о заказе */
+.order-info {
+    margin-bottom: 20px;
+    text-align: left;
+    font-size: 16px;
+}
+
+.order-info strong {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+
+/* Обновленный стиль формы в модальном окне */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.form-group input, 
+.form-group textarea, 
+.form-group select {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    width: 100%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+textarea {
+    resize: vertical;
+}
+
+button.btn {
+    padding: 12px;
+    font-size: 18px;
+    background-color: #007BFF; /* Синий цвет */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.3s;
+}
+
+button.btn:hover {
+    background-color: #0056b3; /* Темно-синий цвет при наведении */
+}
+
+/* Анимации */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .orders-column {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    .modal-content {
+        width: 90%;
+        max-width: none;
+    }
+
+    .btn {
+        max-width: 100%;
+    }
+}
