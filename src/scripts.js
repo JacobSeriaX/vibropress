@@ -2,6 +2,7 @@
 const firebaseConfig = {
     apiKey: "AIzaSyDZy-kc8yyIKWdJKXxLdPoc3gm7Xq96b0w",
     authDomain: "vibropress-713e1.firebaseapp.com",
+    databaseURL: "https://vibropress-713e1-default-rtdb.firebaseio.com",
     projectId: "vibropress-713e1",
     storageBucket: "vibropress-713e1.appspot.com",
     messagingSenderId: "954424014496",
@@ -11,7 +12,7 @@ const firebaseConfig = {
   
   // Инициализация Firebase
   firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+  const db = firebase.database();
   
   // Функция для преобразования типа оплаты в текст
   function getPaymentTypeText(type) {
@@ -28,7 +29,7 @@ const firebaseConfig = {
   }
   
   // Обработка отправки формы нового заказа
-  document.getElementById('newOrderForm').addEventListener('submit', async function(event) {
+  document.getElementById('newOrderForm').addEventListener('submit', function(event) {
       event.preventDefault(); // Предотвращаем перезагрузку страницы при отправке формы
   
       const name = document.getElementById('name').value.trim();
@@ -37,7 +38,7 @@ const firebaseConfig = {
       const quantity = parseInt(document.getElementById('quantity').value);
       const company = document.getElementById('company').value.trim();
       const note = document.getElementById('note').value.trim();
-      const deadline = new Date(document.getElementById('deadline').value);
+      const deadline = document.getElementById('deadline').value;
       const paymentType = document.getElementById('paymentType').value;
       const totalAmount = parseFloat(document.getElementById('totalAmount').value);
       const depositAmount = parseFloat(document.getElementById('depositAmount').value);
@@ -58,24 +59,26 @@ const firebaseConfig = {
           quantity,
           company,
           note,
-          deadline: firebase.firestore.Timestamp.fromDate(deadline),
+          deadline, // Храним как строку в формате "YYYY-MM-DD"
           status: 'waiting', // Статус по умолчанию "ожидание"
           paymentType,
           totalAmount,
           depositAmount,
           depositPercentage,
           outstandingAmount,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          createdAt: firebase.database.ServerValue.TIMESTAMP
       };
   
-      try {
-          await db.collection('orders').add(order);
-          closeFormModal();
-          document.getElementById('newOrderForm').reset();
-      } catch (error) {
-          console.error("Ошибка при добавлении заказа: ", error);
-          alert("Произошла ошибка при добавлении заказа. Пожалуйста, попробуйте еще раз.");
-      }
+      // Сохраняем заказ в Realtime Database
+      db.ref('orders').push(order, function(error) {
+          if (error) {
+              console.error("Ошибка при добавлении заказа: ", error);
+              alert("Произошла ошибка при добавлении заказа. Пожалуйста, попробуйте еще раз.");
+          } else {
+              closeFormModal();
+              document.getElementById('newOrderForm').reset();
+          }
+      });
   });
   
   // Функция для отображения всех заказов на странице
@@ -86,16 +89,16 @@ const firebaseConfig = {
       document.getElementById('completed-1m-orders').innerHTML = '';
       document.getElementById('completed-1.20m-orders').innerHTML = '';
   
-      db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+      db.ref('orders').on('value', function(snapshot) {
           // Очищаем контейнеры перед обновлением
           document.getElementById('waiting-1m-orders').innerHTML = '';
           document.getElementById('waiting-1.20m-orders').innerHTML = '';
           document.getElementById('completed-1m-orders').innerHTML = '';
           document.getElementById('completed-1.20m-orders').innerHTML = '';
   
-          snapshot.forEach(doc => {
-              const order = doc.data();
-              order.id = doc.id; // Добавляем ID документа
+          snapshot.forEach(function(childSnapshot) {
+              const order = childSnapshot.val();
+              order.id = childSnapshot.key; // Получаем уникальный ключ заказа
   
               const orderDiv = document.createElement('div');
               orderDiv.classList.add('order');
@@ -112,7 +115,7 @@ const firebaseConfig = {
   
               // Расчет оставшихся дней до дедлайна
               const now = new Date();
-              const deadlineDate = order.deadline.toDate();
+              const deadlineDate = new Date(order.deadline);
               const daysLeft = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24)); // Количество оставшихся дней
   
               // Применение классов в зависимости от оставшегося времени до дедлайна
@@ -158,7 +161,7 @@ const firebaseConfig = {
       document.getElementById('orderInfoQuantity').innerText = order.quantity;
       document.getElementById('orderInfoCompany').innerText = order.company;
       document.getElementById('orderInfoNote').innerText = order.note;
-      document.getElementById('orderInfoDeadline').innerText = order.deadline.toDate().toLocaleDateString();
+      document.getElementById('orderInfoDeadline').innerText = new Date(order.deadline).toLocaleDateString();
       document.getElementById('orderInfoPaymentType').innerText = getPaymentTypeText(order.paymentType);
       document.getElementById('orderInfoTotalAmount').innerText = order.totalAmount.toLocaleString();
       document.getElementById('orderInfoDepositAmount').innerText = `${order.depositAmount.toLocaleString()} сум`;
@@ -185,7 +188,7 @@ const firebaseConfig = {
   // Функция для удаления заказа по его идентификатору
   function deleteOrder(id) {
       if (confirm('Вы уверены, что хотите удалить этот заказ?')) {
-          db.collection('orders').doc(id).delete()
+          db.ref('orders/' + id).remove()
               .then(() => {
                   console.log("Заказ успешно удален!");
               })
@@ -247,14 +250,81 @@ const firebaseConfig = {
   function sortOrders() {
       const sort = document.getElementById('sortOrders').value; // Получаем выбранную сортировку
   
-      // Для сортировки заказов нам нужно получить их из базы данных заново
-      // Здесь можно реализовать более сложную логику, если необходимо
-      // Но так как мы используем onSnapshot для реального времени, мы не будем повторно получать данные
-      // Вместо этого можно обновить функцию renderOrders(), чтобы учитывать сортировку
+      db.ref('orders').once('value', function(snapshot) {
+          let ordersArray = [];
+          snapshot.forEach(function(childSnapshot) {
+              const order = childSnapshot.val();
+              order.id = childSnapshot.key;
+              ordersArray.push(order);
+          });
+  
+          // Сортировка массива заказов по дате дедлайна
+          if (sort === 'dateAsc') {
+              ordersArray.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+          } else if (sort === 'dateDesc') {
+              ordersArray.sort((a, b) => new Date(b.deadline) - new Date(a.deadline));
+          }
+  
+          // Очищаем все контейнеры
+          document.getElementById('waiting-1m-orders').innerHTML = '';
+          document.getElementById('waiting-1.20m-orders').innerHTML = '';
+          document.getElementById('completed-1m-orders').innerHTML = '';
+          document.getElementById('completed-1.20m-orders').innerHTML = '';
+  
+          // Отображаем отсортированные заказы
+          ordersArray.forEach(order => {
+              const orderDiv = document.createElement('div');
+              orderDiv.classList.add('order');
+              orderDiv.innerText = `${order.company} - ${order.name}`;
+  
+              // Кнопка удаления заказа
+              const deleteBtn = document.createElement('button');
+              deleteBtn.innerHTML = 'X';
+              deleteBtn.onclick = function(event) {
+                  event.stopPropagation(); // Останавливаем всплытие события
+                  deleteOrder(order.id); // Вызов функции удаления заказа
+              };
+              orderDiv.appendChild(deleteBtn);
+  
+              // Расчет оставшихся дней до дедлайна
+              const now = new Date();
+              const deadlineDate = new Date(order.deadline);
+              const daysLeft = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24)); // Количество оставшихся дней
+  
+              // Применение классов в зависимости от оставшегося времени до дедлайна
+              if (daysLeft <= 5 && daysLeft > 2) {
+                  orderDiv.classList.add('blink-yellow'); // Мигает желтым, если осталось менее 5 дней
+              } else if (daysLeft <= 2 && daysLeft > 0) {
+                  orderDiv.classList.add('blink-red'); // Мигает красным, если осталось менее 2 дней
+              } else if (daysLeft <= 0) {
+                  orderDiv.classList.add('blink-maroon'); // Мигает темно-красным, если срок истек
+              }
+  
+              // Открытие модального окна с информацией о заказе при клике на заказ
+              orderDiv.onclick = function() {
+                  showOrderInfo(order);
+              };
+  
+              // Определение куда добавить заказ в зависимости от статуса и размера
+              if (order.status === 'waiting') {
+                  if (order.size === '1m') {
+                      document.getElementById('waiting-1m-orders').appendChild(orderDiv);
+                  } else if (order.size === '1.20m') {
+                      document.getElementById('waiting-1.20m-orders').appendChild(orderDiv);
+                  }
+              } else if (order.status === 'completed') {
+                  if (order.size === '1m') {
+                      document.getElementById('completed-1m-orders').appendChild(orderDiv);
+                  } else if (order.size === '1.20m') {
+                      document.getElementById('completed-1.20m-orders').appendChild(orderDiv);
+                  }
+              }
+          });
+      });
   }
   
   // Сразу отображаем заказы при загрузке страницы
   window.onload = function() {
-      renderOrders(); // Отображаем все заказы из Firestore
+      renderOrders(); // Отображаем все заказы из Realtime Database
   };
   
