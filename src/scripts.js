@@ -1,5 +1,5 @@
-// Инициализация Firebase
-const firebaseConfig = {
+// Initialize Firebase
+var firebaseConfig = {
     apiKey: "AIzaSyDZy-kc8yyIKWdJKXxLdPoc3gm7Xq96b0w",
     authDomain: "vibropress-713e1.firebaseapp.com",
     databaseURL: "https://vibropress-713e1-default-rtdb.firebaseio.com",
@@ -9,10 +9,9 @@ const firebaseConfig = {
     appId: "1:954424014496:web:2eba467bf34a249816fbc5",
     measurementId: "G-GKEVHBSZBM"
   };
-  
-  // Инициализация Firebase
+  // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+  var db = firebase.database();
   
   // Функция для преобразования типа оплаты в текст
   function getPaymentTypeText(type) {
@@ -32,16 +31,16 @@ const firebaseConfig = {
   document.getElementById('newOrderForm').addEventListener('submit', function(event) {
       event.preventDefault(); // Предотвращаем перезагрузку страницы при отправке формы
   
-      const name = document.getElementById('name').value.trim();
-      const phone = document.getElementById('phone').value.trim();
-      const size = document.getElementById('size').value;
-      const quantity = parseInt(document.getElementById('quantity').value);
-      const company = document.getElementById('company').value.trim();
-      const note = document.getElementById('note').value.trim();
-      const deadline = document.getElementById('deadline').value;
-      const paymentType = document.getElementById('paymentType').value;
-      const totalAmount = parseFloat(document.getElementById('totalAmount').value);
-      const depositAmount = parseFloat(document.getElementById('depositAmount').value);
+      var name = document.getElementById('name').value.trim();
+      var phone = document.getElementById('phone').value.trim();
+      var size = document.getElementById('size').value;
+      var quantity = parseInt(document.getElementById('quantity').value);
+      var company = document.getElementById('company').value.trim();
+      var note = document.getElementById('note').value.trim();
+      var deadline = document.getElementById('deadline').value;
+      var paymentType = document.getElementById('paymentType').value;
+      var totalAmount = parseFloat(document.getElementById('totalAmount').value);
+      var depositAmount = parseFloat(document.getElementById('depositAmount').value);
   
       // Проверка, чтобы залог не превышал общую сумму
       if (depositAmount > totalAmount) {
@@ -49,23 +48,23 @@ const firebaseConfig = {
           return;
       }
   
-      const depositPercentage = ((depositAmount / totalAmount) * 100).toFixed(2);
-      const outstandingAmount = totalAmount - depositAmount;
+      var depositPercentage = ((depositAmount / totalAmount) * 100).toFixed(2);
+      var outstandingAmount = totalAmount - depositAmount;
   
-      const order = {
-          name,
-          phone,
-          size,
-          quantity,
-          company,
-          note,
-          deadline, // Храним как строку в формате "YYYY-MM-DD"
+      var order = {
+          name: name,
+          phone: phone,
+          size: size,
+          quantity: quantity,
+          company: company,
+          note: note,
+          deadline: deadline, // Храним как строку в формате "YYYY-MM-DD"
           status: 'waiting', // Статус по умолчанию "ожидание"
-          paymentType,
-          totalAmount,
-          depositAmount,
-          depositPercentage,
-          outstandingAmount,
+          paymentType: paymentType,
+          totalAmount: totalAmount,
+          depositAmount: depositAmount,
+          depositPercentage: depositPercentage,
+          outstandingAmount: outstandingAmount,
           createdAt: firebase.database.ServerValue.TIMESTAMP
       };
   
@@ -97,15 +96,15 @@ const firebaseConfig = {
           document.getElementById('completed-1.20m-orders').innerHTML = '';
   
           snapshot.forEach(function(childSnapshot) {
-              const order = childSnapshot.val();
+              var order = childSnapshot.val();
               order.id = childSnapshot.key; // Получаем уникальный ключ заказа
   
-              const orderDiv = document.createElement('div');
+              var orderDiv = document.createElement('div');
               orderDiv.classList.add('order');
-              orderDiv.innerText = `${order.company} - ${order.name}`;
+              orderDiv.innerText = order.company + ' - ' + order.name;
   
               // Кнопка удаления заказа
-              const deleteBtn = document.createElement('button');
+              var deleteBtn = document.createElement('button');
               deleteBtn.innerHTML = 'X';
               deleteBtn.onclick = function(event) {
                   event.stopPropagation(); // Останавливаем всплытие события
@@ -114,9 +113,9 @@ const firebaseConfig = {
               orderDiv.appendChild(deleteBtn);
   
               // Расчет оставшихся дней до дедлайна
-              const now = new Date();
-              const deadlineDate = new Date(order.deadline);
-              const daysLeft = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24)); // Количество оставшихся дней
+              var now = new Date();
+              var deadlineDate = new Date(order.deadline);
+              var daysLeft = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24)); // Количество оставшихся дней
   
               // Применение классов в зависимости от оставшегося времени до дедлайна
               if (daysLeft <= 5 && daysLeft > 2) {
@@ -152,7 +151,7 @@ const firebaseConfig = {
   
   // Функция для отображения информации о заказе в модальном окне
   function showOrderInfo(order) {
-      const modal = document.getElementById('orderInfoModal');
+      var modal = document.getElementById('orderInfoModal');
       modal.style.display = 'flex'; // Изменено на 'flex' для правильного центрирования
   
       document.getElementById('orderInfoName').innerText = order.name;
@@ -164,12 +163,12 @@ const firebaseConfig = {
       document.getElementById('orderInfoDeadline').innerText = new Date(order.deadline).toLocaleDateString();
       document.getElementById('orderInfoPaymentType').innerText = getPaymentTypeText(order.paymentType);
       document.getElementById('orderInfoTotalAmount').innerText = order.totalAmount.toLocaleString();
-      document.getElementById('orderInfoDepositAmount').innerText = `${order.depositAmount.toLocaleString()} сум`;
+      document.getElementById('orderInfoDepositAmount').innerText = order.depositAmount.toLocaleString() + ' сум';
   
       document.getElementById('orderInfoDepositPercentage').innerText = order.depositPercentage;
   
-      const outstandingElement = document.getElementById('orderInfoOutstandingAmount');
-      outstandingElement.innerText = `${order.outstandingAmount.toLocaleString()} сум`;
+      var outstandingElement = document.getElementById('orderInfoOutstandingAmount');
+      outstandingElement.innerText = order.outstandingAmount.toLocaleString() + ' сум';
   
       if (order.outstandingAmount > 0) {
           outstandingElement.classList.remove('deposit-paid');
@@ -189,10 +188,10 @@ const firebaseConfig = {
   function deleteOrder(id) {
       if (confirm('Вы уверены, что хотите удалить этот заказ?')) {
           db.ref('orders/' + id).remove()
-              .then(() => {
+              .then(function() {
                   console.log("Заказ успешно удален!");
               })
-              .catch((error) => {
+              .catch(function(error) {
                   console.error("Ошибка при удалении заказа: ", error);
                   alert("Произошла ошибка при удалении заказа. Пожалуйста, попробуйте еще раз.");
               });
@@ -212,10 +211,10 @@ const firebaseConfig = {
   
   // Функция для поиска заказов по тексту в поле поиска
   function searchOrders() {
-      const query = document.getElementById('searchInput').value.toLowerCase(); // Получаем поисковый запрос
-      const orders = document.querySelectorAll('.order'); // Находим все заказы
+      var query = document.getElementById('searchInput').value.toLowerCase(); // Получаем поисковый запрос
+      var orders = document.querySelectorAll('.order'); // Находим все заказы
   
-      orders.forEach(orderElement => {
+      orders.forEach(function(orderElement) {
           // Проверяем наличие текста из поискового запроса в каждом заказе
           if (orderElement.innerText.toLowerCase().includes(query)) {
               orderElement.style.display = 'block'; // Показываем заказы, которые совпадают с запросом
@@ -227,16 +226,16 @@ const firebaseConfig = {
   
   // Функция для фильтрации заказов по статусу
   function filterOrders() {
-      const filter = document.getElementById('filterStatus').value; // Получаем выбранный фильтр
-      const orders = document.querySelectorAll('.order'); // Находим все заказы
+      var filter = document.getElementById('filterStatus').value; // Получаем выбранный фильтр
+      var orders = document.querySelectorAll('.order'); // Находим все заказы
   
-      orders.forEach(orderElement => {
+      orders.forEach(function(orderElement) {
           // Проверяем соответствие статуса
           if (filter === 'all') {
               orderElement.style.display = 'block'; // Показываем все заказы
           } else {
               // Определяем статус заказа
-              const status = orderElement.parentElement.parentElement.id.includes('waiting') ? 'waiting' : 'completed';
+              var status = orderElement.parentElement.parentElement.id.includes('waiting') ? 'waiting' : 'completed';
               if (status === filter) {
                   orderElement.style.display = 'block'; // Показываем заказы с нужным статусом
               } else {
@@ -248,21 +247,25 @@ const firebaseConfig = {
   
   // Функция для сортировки заказов по дате дедлайна
   function sortOrders() {
-      const sort = document.getElementById('sortOrders').value; // Получаем выбранную сортировку
+      var sort = document.getElementById('sortOrders').value; // Получаем выбранную сортировку
   
       db.ref('orders').once('value', function(snapshot) {
-          let ordersArray = [];
+          var ordersArray = [];
           snapshot.forEach(function(childSnapshot) {
-              const order = childSnapshot.val();
+              var order = childSnapshot.val();
               order.id = childSnapshot.key;
               ordersArray.push(order);
           });
   
           // Сортировка массива заказов по дате дедлайна
           if (sort === 'dateAsc') {
-              ordersArray.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+              ordersArray.sort(function(a, b) {
+                  return new Date(a.deadline) - new Date(b.deadline);
+              });
           } else if (sort === 'dateDesc') {
-              ordersArray.sort((a, b) => new Date(b.deadline) - new Date(a.deadline));
+              ordersArray.sort(function(a, b) {
+                  return new Date(b.deadline) - new Date(a.deadline);
+              });
           }
   
           // Очищаем все контейнеры
@@ -272,13 +275,13 @@ const firebaseConfig = {
           document.getElementById('completed-1.20m-orders').innerHTML = '';
   
           // Отображаем отсортированные заказы
-          ordersArray.forEach(order => {
-              const orderDiv = document.createElement('div');
+          ordersArray.forEach(function(order) {
+              var orderDiv = document.createElement('div');
               orderDiv.classList.add('order');
-              orderDiv.innerText = `${order.company} - ${order.name}`;
+              orderDiv.innerText = order.company + ' - ' + order.name;
   
               // Кнопка удаления заказа
-              const deleteBtn = document.createElement('button');
+              var deleteBtn = document.createElement('button');
               deleteBtn.innerHTML = 'X';
               deleteBtn.onclick = function(event) {
                   event.stopPropagation(); // Останавливаем всплытие события
@@ -287,9 +290,9 @@ const firebaseConfig = {
               orderDiv.appendChild(deleteBtn);
   
               // Расчет оставшихся дней до дедлайна
-              const now = new Date();
-              const deadlineDate = new Date(order.deadline);
-              const daysLeft = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24)); // Количество оставшихся дней
+              var now = new Date();
+              var deadlineDate = new Date(order.deadline);
+              var daysLeft = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24)); // Количество оставшихся дней
   
               // Применение классов в зависимости от оставшегося времени до дедлайна
               if (daysLeft <= 5 && daysLeft > 2) {
