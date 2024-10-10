@@ -35,6 +35,7 @@ document.getElementById('newOrderForm').addEventListener('submit', function(even
     var name = document.getElementById('name').value.trim();
     var phone = document.getElementById('phone').value.trim();
     var size = document.getElementById('size').value;
+    var length = document.getElementById('length').value; // Получаем значение длины
     var quantity = parseInt(document.getElementById('quantity').value);
     var company = document.getElementById('company').value.trim();
     var note = document.getElementById('note').value.trim();
@@ -56,6 +57,7 @@ document.getElementById('newOrderForm').addEventListener('submit', function(even
         name: name,
         phone: phone,
         size: size,
+        length: length, // Сохраняем длину
         quantity: quantity,
         company: company,
         note: note,
@@ -158,6 +160,16 @@ function showOrderInfo(order) {
     document.getElementById('orderInfoName').innerText = order.name;
     document.getElementById('orderInfoPhone').innerText = order.phone;
     document.getElementById('orderInfoSize').innerText = order.size === '1m' ? '1 метр' : '1.20 метра';
+    document.getElementById('orderInfoLength').innerText = order.length === '1m' ? '1 метр' :
+        order.length === '2m' ? '2 метра' :
+        order.length === '3m' ? '3 метра' :
+        order.length === '4m' ? '4 метра' :
+        order.length === '5m' ? '5 метров' :
+        order.length === '6m' ? '6 метров' :
+        order.length === '7m' ? '7 метров' :
+        order.length === '8m' ? '8 метров' :
+        order.length === '9m' ? '9 метров' :
+        '10 метров';
     document.getElementById('orderInfoQuantity').innerText = order.quantity;
     document.getElementById('orderInfoCompany').innerText = order.company;
     document.getElementById('orderInfoNote').innerText = order.note;

@@ -216,12 +216,14 @@ h1 {
     background-color: #fff;
     padding: 30px;
     border-radius: 20px;
-    width: 50%;
-    max-width: 500px; /* Увеличенная ширина модального окна */
+    width: 600px; /* Компактная ширина модального окна */
+    max-width: 90%; /* Максимальная ширина для мобильных устройств */
+    max-height: 90vh; /* Максимальная высота окна */
     text-align: center;
     position: relative;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
     animation: slideUp 0.4s ease;
+    overflow-y: auto; /* Добавлено для прокрутки содержимого при необходимости */
 }
 
 .close {
@@ -327,12 +329,36 @@ button.btn:hover {
         margin-bottom: 20px;
     }
 
-    .modal-content {
-        width: 90%;
-        max-width: none;
-    }
-
     .btn {
         max-width: 100%;
+    }
+
+    .modal-content {
+        width: 90%;
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 28px;
+    }
+
+    .section-title {
+        font-size: 20px;
+    }
+
+    .form-group label,
+    .order-info strong {
+        font-size: 14px;
+    }
+
+    .form-group input, 
+    .form-group textarea, 
+    .form-group select {
+        font-size: 14px;
+    }
+
+    button.btn, .btn {
+        font-size: 16px;
+        padding: 10px;
     }
 }
