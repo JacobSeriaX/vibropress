@@ -115,20 +115,9 @@ function showOrderInfo(order) {
     document.getElementById('orderInfoName').innerText = order.name || 'Не указано';
     document.getElementById('orderInfoPhone').innerText = order.phone || 'Не указано';
     document.getElementById('orderInfoCompany').innerText = order.company || 'Не указано';
-    
-    // Отображение размеров и количеств
-    var sizesInfo = '';
-    if (order.sizes && Array.isArray(order.sizes)) {
-        order.sizes.forEach(function(sizeObj, index) {
-            sizesInfo += `<strong>Размер ${index + 1} по ширине:</strong> ${sizeObj.size}<br>`;
-            sizesInfo += `<strong>Размер ${index + 1} по длине:</strong> ${formatLength(sizeObj.length)}<br>`;
-            sizesInfo += `<strong>Количество ${index + 1}:</strong> ${sizeObj.quantity}<br><br>`;
-        });
-    } else {
-        sizesInfo = 'Не указано<br>';
-    }
-    document.getElementById('orderInfoSize').innerHTML = sizesInfo;
-
+    document.getElementById('orderInfoSize').innerText = order.size || 'Не указано';
+    document.getElementById('orderInfoLength').innerText = formatLength(order.length);
+    document.getElementById('orderInfoQuantity').innerText = order.quantity || 'Не указано';
     document.getElementById('orderInfoPaymentType').innerText = getPaymentTypeText(order.paymentType);
     document.getElementById('orderInfoBankAccount').innerText = (order.paymentType === 'bank') ? (order.bankAccount || 'Не указано') : 'Не требуется';
     document.getElementById('orderInfoTotalAmount').innerText = order.totalAmount ? order.totalAmount.toLocaleString() : '0';
@@ -147,6 +136,18 @@ function showOrderInfo(order) {
             outstandingElement.classList.remove('outstanding');
             outstandingElement.classList.add('deposit-paid');
         }
+    }
+
+    // Добавляем обработчик для кнопки "Готово"
+    var markCompletedBtn = document.getElementById('markCompletedBtn');
+    if (markCompletedBtn) {
+        // Удаляем предыдущие обработчики, чтобы избежать дублирования
+        var newMarkCompletedBtn = markCompletedBtn.cloneNode(true);
+        markCompletedBtn.parentNode.replaceChild(newMarkCompletedBtn, markCompletedBtn);
+
+        newMarkCompletedBtn.addEventListener('click', function() {
+            markOrderCompleted(order.id);
+        });
     }
 }
 
@@ -385,7 +386,7 @@ document.getElementById('newOrderForm').addEventListener('submit', function(even
         return;
     }
 
-    // Получаем значения из формы, проверяя наличие элементов
+    // Получаем общие значения из формы, проверяя наличие элементов
     var name = document.getElementById('name') ? document.getElementById('name').value.trim() : '';
     var phone = document.getElementById('phone') ? document.getElementById('phone').value.trim() : '';
     var company = document.getElementById('company') ? document.getElementById('company').value.trim() : '';
@@ -410,6 +411,11 @@ document.getElementById('newOrderForm').addEventListener('submit', function(even
         }
     });
 
+    if (sizes.length === 0) {
+        alert('Пожалуйста, добавьте хотя бы один размер бетона.');
+        return;
+    }
+
     var paymentType = document.getElementById('paymentType') ? document.getElementById('paymentType').value : '';
     var bankAccount = (paymentType === 'bank' && document.getElementById('bankAccount')) ? document.getElementById('bankAccount').value.trim() : '';
     var totalAmount = document.getElementById('totalAmount') ? parseFloat(document.getElementById('totalAmount').value) : 0;
@@ -426,33 +432,42 @@ document.getElementById('newOrderForm').addEventListener('submit', function(even
     var depositPercentage = totalAmount > 0 ? ((depositAmount / totalAmount) * 100).toFixed(2) : '0.00';
     var outstandingAmount = totalAmount - depositAmount;
 
-    var order = {
-        name: name,
-        phone: phone,
-        company: company,
-        sizes: sizes, // Массив размеров
-        paymentType: paymentType,
-        bankAccount: bankAccount,
-        totalAmount: totalAmount,
-        depositAmount: depositAmount,
-        depositPercentage: depositPercentage,
-        outstandingAmount: outstandingAmount,
-        note: note,
-        deadline: deadline, // Храним как строку в формате "YYYY-MM-DD"
-        status: 'waiting', // Статус по умолчанию "ожидание"
-        createdAt: firebase.database.ServerValue.TIMESTAMP
-    };
+    // Для каждого размера создаем отдельный заказ
+    sizes.forEach(function(sizeObj) {
+        var order = {
+            name: name,
+            phone: phone,
+            company: company,
+            size: sizeObj.size,
+            length: sizeObj.length,
+            quantity: sizeObj.quantity,
+            paymentType: paymentType,
+            bankAccount: bankAccount,
+            totalAmount: totalAmount,
+            depositAmount: depositAmount,
+            depositPercentage: depositPercentage,
+            outstandingAmount: outstandingAmount,
+            note: note,
+            deadline: deadline, // Храним как строку в формате "YYYY-MM-DD"
+            status: 'waiting', // Статус по умолчанию "ожидание"
+            createdAt: firebase.database.ServerValue.TIMESTAMP
+        };
 
-    // Сохраняем заказ в Realtime Database
-    db.ref('orders').push(order, function(error) {
-        if (error) {
-            console.error("Ошибка при добавлении заказа: ", error);
-            alert("Произошла ошибка при добавлении заказа. Пожалуйста, попробуйте еще раз.");
-        } else {
-            closeFormModal();
-            alert("Заказ успешно оформлен!");
-        }
+        // Сохраняем заказ в Realtime Database
+        db.ref('orders').push(order, function(error) {
+            if (error) {
+                console.error("Ошибка при добавлении заказа: ", error);
+                alert("Произошла ошибка при добавлении заказа. Пожалуйста, попробуйте еще раз.");
+            } else {
+                // Для демонстрации можно добавить уведомление, но лучше сохранять один раз после всех
+                // alert("Заказ успешно оформлен!");
+            }
+        });
     });
+
+    // После сохранения всех заказов закрываем форму и показываем уведомление
+    closeFormModal();
+    alert("Заказы успешно оформлены!");
 });
 
 // Функция для создания элемента заказа
@@ -461,7 +476,7 @@ function createOrderDiv(order) {
 
     var orderDiv = document.createElement('div');
     orderDiv.classList.add('order');
-    orderDiv.innerText = order.company + ' - ' + order.name;
+    orderDiv.innerText = `${order.company} - ${order.name} (${order.size})`;
 
     // Кнопка удаления заказа
     var deleteBtn = document.createElement('button');
@@ -484,6 +499,11 @@ function createOrderDiv(order) {
         orderDiv.classList.add('blink-red'); // Мигает красным, если осталось менее 2 дней
     } else if (daysLeft <= 0) {
         orderDiv.classList.add('blink-maroon'); // Мигает темно-красным, если срок истек
+    }
+
+    // Добавляем класс 'ready' если статус заказа 'completed'
+    if (order.status === 'completed') {
+        orderDiv.classList.add('ready');
     }
 
     // Открытие модального окна с информацией о заказе при клике на заказ
@@ -522,17 +542,17 @@ function renderOrders() {
 
             // Определение куда добавить заказ в зависимости от статуса и размера
             if (order.status === 'waiting') {
-                if (order.sizes && order.sizes.some(s => s.size === '1m')) {
+                if (order.size === '1m') {
                     if (waiting1m) waiting1m.appendChild(orderDiv);
                 }
-                if (order.sizes && order.sizes.some(s => s.size === '1.20m')) {
+                if (order.size === '1.20m') {
                     if (waiting1_20m) waiting1_20m.appendChild(orderDiv);
                 }
             } else if (order.status === 'completed') {
-                if (order.sizes && order.sizes.some(s => s.size === '1m')) {
+                if (order.size === '1m') {
                     if (completed1m) completed1m.appendChild(orderDiv);
                 }
-                if (order.sizes && order.sizes.some(s => s.size === '1.20m')) {
+                if (order.size === '1.20m') {
                     if (completed1_20m) completed1_20m.appendChild(orderDiv);
                 }
             }
@@ -551,6 +571,29 @@ function closePreviewModal() {
     var previewModal = document.getElementById('previewModal');
     if (previewModal) {
         previewModal.style.display = 'none';
+    }
+}
+
+// Функция для изменения статуса заказа на "Готово"
+function markOrderCompleted(orderId) {
+    db.ref('orders/' + orderId).update({
+        status: 'completed'
+    }, function(error) {
+        if (error) {
+            console.error("Ошибка при обновлении статуса заказа: ", error);
+            alert("Произошла ошибка при обновлении статуса заказа. Пожалуйста, попробуйте еще раз.");
+        } else {
+            alert("Статус заказа успешно изменен на 'Готово'!");
+            closeOrderInfoModal();
+        }
+    });
+}
+
+// Функция для закрытия модального окна информации о заказе
+function closeOrderInfoModal() {
+    var modal = document.getElementById('orderInfoModal');
+    if (modal) {
+        modal.style.display = 'none';
     }
 }
 

@@ -73,15 +73,15 @@
                 <div class="form-step" id="step-1">
                     <div class="form-group">
                         <label for="name">Имя:</label>
-                        <input type="text" id="name" required title="Введите ваше полное имя">
+                        <input type="text" id="name" required>
                     </div>
                     <div class="form-group">
                         <label for="phone">Телефон:</label>
-                        <input type="tel" id="phone" required title="Введите ваш номер телефона">
+                        <input type="tel" id="phone" required>
                     </div>
                     <div class="form-group">
                         <label for="company">Компания:</label>
-                        <input type="text" id="company" required title="Введите название вашей компании">
+                        <input type="text" id="company" required>
                     </div>
                     <div class="form-navigation">
                         <button type="button" class="btn-next" onclick="nextStep()">Далее</button>
@@ -93,7 +93,7 @@
                     <div id="sizesContainer">
                         <div class="size-entry">
                             <div class="form-group">
-                                <label for="size">Размер бетона по ширине:</label>
+                                <label>Размер бетона по ширине:</label>
                                 <select name="size" class="size-select" required>
                                     <option value="" disabled selected>Выберите размер бетона по ширине</option>
                                     <option value="1m">1 метр</option>
@@ -101,12 +101,12 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="length">Размер бетона по длине (метры):</label>
-                                <input type="number" name="length" class="length-input" step="0.1" min="0.1" max="10" required title="Введите размер бетона по длине до 10 метров">
+                                <label>Размер бетона по длине (метры):</label>
+                                <input type="number" name="length" class="length-input" step="0.1" min="0.1" max="10" required>
                             </div>
                             <div class="form-group">
-                                <label for="quantity">Количество:</label>
-                                <input type="number" name="quantity" class="quantity-input" min="1" required title="Введите количество бетона">
+                                <label>Количество:</label>
+                                <input type="number" name="quantity" class="quantity-input" min="1" required>
                             </div>
                             <button type="button" class="btn-remove" onclick="removeSizeEntry(this)">Удалить</button>
                         </div>
@@ -122,7 +122,7 @@
                 <div class="form-step" id="step-3" style="display: none;">
                     <div class="form-group">
                         <label for="paymentType">Тип оплаты:</label>
-                        <select id="paymentType" required title="Выберите тип оплаты" onchange="toggleBankDetails()">
+                        <select id="paymentType" required onchange="toggleBankDetails()">
                             <option value="" disabled selected>Выберите тип оплаты</option>
                             <option value="cash">Наличные</option>
                             <option value="bank">Банковский перевод</option>
@@ -131,23 +131,23 @@
                     </div>
                     <div class="form-group" id="bankDetails" style="display: none;">
                         <label for="bankAccount">Номер банковского счета:</label>
-                        <input type="text" id="bankAccount" title="Введите номер вашего банковского счета">
+                        <input type="text" id="bankAccount">
                     </div>
                     <div class="form-group">
                         <label for="totalAmount">Итого сумма (сум):</label>
-                        <input type="number" id="totalAmount" min="0" required title="Введите общую сумму заказа">
+                        <input type="number" id="totalAmount" min="0" required>
                     </div>
                     <div class="form-group">
                         <label for="depositAmount">Залог (сум):</label>
-                        <input type="number" id="depositAmount" min="0" required title="Введите сумму залога">
+                        <input type="number" id="depositAmount" min="0" required>
                     </div>
                     <div class="form-group">
                         <label for="deadline">Срок выполнения:</label>
-                        <input type="date" id="deadline" required title="Выберите дату окончания заказа">
+                        <input type="date" id="deadline" required>
                     </div>
                     <div class="form-group">
                         <label for="note">Примечание:</label>
-                        <textarea id="note" rows="3" title="Введите примечание (необязательно)"></textarea>
+                        <textarea id="note" rows="3"></textarea>
                     </div>
                     <div class="form-navigation">
                         <button type="button" class="btn-back" onclick="previousStep()">Назад</button>
@@ -190,6 +190,7 @@
                 <strong>Примечание:</strong> <span id="orderInfoNote"></span>
                 <strong>Срок выполнения:</strong> <span id="orderInfoDeadline"></span>
             </div>
+            <button type="button" class="btn-submit" id="markCompletedBtn">Готово</button>
         </div>
     </div>
 

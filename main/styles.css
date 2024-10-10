@@ -114,6 +114,7 @@ h1 {
 .order.ready {
     background-color: #48bb78; /* Зеленый цвет для готовых заказов */
     color: white;
+    animation: blink-green 1s infinite; /* Добавляем анимацию мигания */
 }
 
 /* Кнопка удаления заказа */
@@ -123,14 +124,14 @@ h1 {
     right: 10px;
     background-color: transparent;
     border: none;
-    color: #007BFF; /* Синий цвет */
+    color: #dc3545; /* Красный цвет */
     font-size: 16px;
     cursor: pointer;
     transition: color 0.3s;
 }
 
 .order button:hover {
-    color: #0056b3; /* Темно-синий цвет при наведении */
+    color: #c82333; /* Темно-красный цвет при наведении */
 }
 
 /* Анимации мигания для дедлайна */
@@ -146,6 +147,13 @@ h1 {
     animation: blink-maroon 1s infinite;
 }
 
+/* Анимация мигания зеленым для готовых заказов */
+@keyframes blink-green {
+    0%, 100% { background-color: #48bb78; }
+    50% { background-color: #38a169; }
+}
+
+/* Остальные анимации */
 @keyframes blink-yellow {
     0%, 100% { background-color: #fff3cd; color: #856404; } /* Светло-желтый */
     50% { background-color: #fff; color: #856404; }
