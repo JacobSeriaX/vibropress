@@ -28,173 +28,134 @@ function getPaymentTypeText(type) {
     }
 }
 
-// Обработка отправки формы нового заказа
-document.getElementById('newOrderForm').addEventListener('submit', function(event) {
-    event.preventDefault(); // Предотвращаем перезагрузку страницы при отправке формы
+// Переменные для управления шагами формы
+var currentStep = 1;
+var totalSteps = 3;
 
-    var name = document.getElementById('name').value.trim();
-    var phone = document.getElementById('phone').value.trim();
-    var size = document.getElementById('size').value;
-    var length = document.getElementById('length').value; // Получаем значение длины
-    var quantity = parseInt(document.getElementById('quantity').value);
-    var company = document.getElementById('company').value.trim();
-    var note = document.getElementById('note').value.trim();
-    var deadline = document.getElementById('deadline').value;
-    var paymentType = document.getElementById('paymentType').value;
-    var totalAmount = parseFloat(document.getElementById('totalAmount').value);
-    var depositAmount = parseFloat(document.getElementById('depositAmount').value);
-
-    // Проверка, чтобы залог не превышал общую сумму
-    if (depositAmount > totalAmount) {
-        alert('Залог не может превышать общую сумму заказа.');
-        return;
+// Функция для переключения шага формы
+function showStep(step) {
+    // Скрываем все шаги
+    for (var i = 1; i <= totalSteps; i++) {
+        var stepElement = document.getElementById('step-' + i);
+        if (stepElement) {
+            stepElement.style.display = 'none';
+        }
     }
 
-    var depositPercentage = ((depositAmount / totalAmount) * 100).toFixed(2);
-    var outstandingAmount = totalAmount - depositAmount;
+    // Показываем текущий шаг
+    var currentStepElement = document.getElementById('step-' + step);
+    if (currentStepElement) {
+        currentStepElement.style.display = 'block';
+    }
 
-    var order = {
-        name: name,
-        phone: phone,
-        size: size,
-        length: length, // Сохраняем длину
-        quantity: quantity,
-        company: company,
-        note: note,
-        deadline: deadline, // Храним как строку в формате "YYYY-MM-DD"
-        status: 'waiting', // Статус по умолчанию "ожидание"
-        paymentType: paymentType,
-        totalAmount: totalAmount,
-        depositAmount: depositAmount,
-        depositPercentage: depositPercentage,
-        outstandingAmount: outstandingAmount,
-        createdAt: firebase.database.ServerValue.TIMESTAMP
-    };
+    // Обновляем прогресс-бар
+    var progress = (step / totalSteps) * 100;
+    var progressBarFill = document.getElementById('progressBarFill');
+    if (progressBarFill) {
+        progressBarFill.style.width = progress + '%';
+    }
+}
 
-    // Сохраняем заказ в Realtime Database
-    db.ref('orders').push(order, function(error) {
-        if (error) {
-            console.error("Ошибка при добавлении заказа: ", error);
-            alert("Произошла ошибка при добавлении заказа. Пожалуйста, попробуйте еще раз.");
+// Функция для перехода на следующий шаг
+function nextStep() {
+    // Валидация текущего шага перед переходом
+    var valid = validateStep(currentStep);
+    if (!valid) return;
+
+    if (currentStep < totalSteps) {
+        currentStep++;
+        showStep(currentStep);
+    }
+}
+
+// Функция для перехода на предыдущий шаг
+function previousStep() {
+    if (currentStep > 1) {
+        currentStep--;
+        showStep(currentStep);
+    }
+}
+
+// Функция для валидации полей текущего шага
+function validateStep(step) {
+    var isValid = true;
+    var stepElement = document.getElementById('step-' + step);
+    if (!stepElement) return false;
+
+    var inputs = stepElement.querySelectorAll('input, select, textarea');
+
+    inputs.forEach(function(input) {
+        if (!input.checkValidity()) {
+            input.classList.add('invalid');
+            isValid = false;
         } else {
-            closeFormModal();
-            document.getElementById('newOrderForm').reset();
+            input.classList.remove('invalid');
         }
     });
-});
 
-// Функция для отображения всех заказов на странице
-function renderOrders() {
-    // Очищаем все контейнеры перед загрузкой
-    document.getElementById('waiting-1m-orders').innerHTML = '';
-    document.getElementById('waiting-1.20m-orders').innerHTML = '';
-    document.getElementById('completed-1m-orders').innerHTML = '';
-    document.getElementById('completed-1.20m-orders').innerHTML = '';
+    if (!isValid) {
+        alert('Пожалуйста, заполните все обязательные поля корректно.');
+    }
 
-    db.ref('orders').on('value', function(snapshot) {
-        // Очищаем контейнеры перед обновлением
-        document.getElementById('waiting-1m-orders').innerHTML = '';
-        document.getElementById('waiting-1.20m-orders').innerHTML = '';
-        document.getElementById('completed-1m-orders').innerHTML = '';
-        document.getElementById('completed-1.20m-orders').innerHTML = '';
+    return isValid;
+}
 
-        snapshot.forEach(function(childSnapshot) {
-            var order = childSnapshot.val();
-            order.id = childSnapshot.key; // Получаем уникальный ключ заказа
-
-            var orderDiv = document.createElement('div');
-            orderDiv.classList.add('order');
-            orderDiv.innerText = order.company + ' - ' + order.name;
-
-            // Кнопка удаления заказа
-            var deleteBtn = document.createElement('button');
-            deleteBtn.innerHTML = 'X';
-            deleteBtn.onclick = function(event) {
-                event.stopPropagation(); // Останавливаем всплытие события
-                deleteOrder(order.id); // Вызов функции удаления заказа
-            };
-            orderDiv.appendChild(deleteBtn);
-
-            // Расчет оставшихся дней до дедлайна
-            var now = new Date();
-            var deadlineDate = new Date(order.deadline);
-            var daysLeft = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24)); // Количество оставшихся дней
-
-            // Применение классов в зависимости от оставшегося времени до дедлайна
-            if (daysLeft <= 5 && daysLeft > 2) {
-                orderDiv.classList.add('blink-yellow'); // Мигает желтым, если осталось менее 5 дней
-            } else if (daysLeft <= 2 && daysLeft > 0) {
-                orderDiv.classList.add('blink-red'); // Мигает красным, если осталось менее 2 дней
-            } else if (daysLeft <= 0) {
-                orderDiv.classList.add('blink-maroon'); // Мигает темно-красным, если срок истек
-            }
-
-            // Открытие модального окна с информацией о заказе при клике на заказ
-            orderDiv.onclick = function() {
-                showOrderInfo(order);
-            };
-
-            // Определение куда добавить заказ в зависимости от статуса и размера
-            if (order.status === 'waiting') {
-                if (order.size === '1m') {
-                    document.getElementById('waiting-1m-orders').appendChild(orderDiv);
-                } else if (order.size === '1.20m') {
-                    document.getElementById('waiting-1.20m-orders').appendChild(orderDiv);
-                }
-            } else if (order.status === 'completed') {
-                if (order.size === '1m') {
-                    document.getElementById('completed-1m-orders').appendChild(orderDiv);
-                } else if (order.size === '1.20m') {
-                    document.getElementById('completed-1.20m-orders').appendChild(orderDiv);
-                }
-            }
-        });
-    });
+// Функция для форматирования длины бетона
+function formatLength(length) {
+    if (!length) return 'Не указано';
+    return parseFloat(length).toFixed(2) + ' м';
 }
 
 // Функция для отображения информации о заказе в модальном окне
 function showOrderInfo(order) {
     var modal = document.getElementById('orderInfoModal');
+    if (!modal) return;
     modal.style.display = 'flex'; // Изменено на 'flex' для правильного центрирования
 
-    document.getElementById('orderInfoName').innerText = order.name;
-    document.getElementById('orderInfoPhone').innerText = order.phone;
-    document.getElementById('orderInfoSize').innerText = order.size === '1m' ? '1 метр' : '1.20 метра';
-    document.getElementById('orderInfoLength').innerText = order.length === '1m' ? '1 метр' :
-        order.length === '2m' ? '2 метра' :
-        order.length === '3m' ? '3 метра' :
-        order.length === '4m' ? '4 метра' :
-        order.length === '5m' ? '5 метров' :
-        order.length === '6m' ? '6 метров' :
-        order.length === '7m' ? '7 метров' :
-        order.length === '8m' ? '8 метров' :
-        order.length === '9m' ? '9 метров' :
-        '10 метров';
-    document.getElementById('orderInfoQuantity').innerText = order.quantity;
-    document.getElementById('orderInfoCompany').innerText = order.company;
-    document.getElementById('orderInfoNote').innerText = order.note;
-    document.getElementById('orderInfoDeadline').innerText = new Date(order.deadline).toLocaleDateString();
-    document.getElementById('orderInfoPaymentType').innerText = getPaymentTypeText(order.paymentType);
-    document.getElementById('orderInfoTotalAmount').innerText = order.totalAmount.toLocaleString();
-    document.getElementById('orderInfoDepositAmount').innerText = order.depositAmount.toLocaleString() + ' сум';
+    document.getElementById('orderInfoName').innerText = order.name || 'Не указано';
+    document.getElementById('orderInfoPhone').innerText = order.phone || 'Не указано';
+    document.getElementById('orderInfoCompany').innerText = order.company || 'Не указано';
+    
+    // Отображение размеров и количеств
+    var sizesInfo = '';
+    if (order.sizes && Array.isArray(order.sizes)) {
+        order.sizes.forEach(function(sizeObj, index) {
+            sizesInfo += `<strong>Размер ${index + 1} по ширине:</strong> ${sizeObj.size}<br>`;
+            sizesInfo += `<strong>Размер ${index + 1} по длине:</strong> ${formatLength(sizeObj.length)}<br>`;
+            sizesInfo += `<strong>Количество ${index + 1}:</strong> ${sizeObj.quantity}<br><br>`;
+        });
+    } else {
+        sizesInfo = 'Не указано<br>';
+    }
+    document.getElementById('orderInfoSize').innerHTML = sizesInfo;
 
-    document.getElementById('orderInfoDepositPercentage').innerText = order.depositPercentage;
+    document.getElementById('orderInfoPaymentType').innerText = getPaymentTypeText(order.paymentType);
+    document.getElementById('orderInfoBankAccount').innerText = (order.paymentType === 'bank') ? (order.bankAccount || 'Не указано') : 'Не требуется';
+    document.getElementById('orderInfoTotalAmount').innerText = order.totalAmount ? order.totalAmount.toLocaleString() : '0';
+    document.getElementById('orderInfoDepositAmount').innerText = order.depositAmount ? order.depositAmount.toLocaleString() + ' сум' : '0 сум';
+    document.getElementById('orderInfoDepositPercentage').innerText = order.depositPercentage ? order.depositPercentage : '0';
+    document.getElementById('orderInfoNote').innerText = order.note || 'Нет';
+    document.getElementById('orderInfoDeadline').innerText = order.deadline ? new Date(order.deadline).toLocaleDateString() : 'Не указано';
 
     var outstandingElement = document.getElementById('orderInfoOutstandingAmount');
-    outstandingElement.innerText = order.outstandingAmount.toLocaleString() + ' сум';
-
-    if (order.outstandingAmount > 0) {
-        outstandingElement.classList.remove('deposit-paid');
-        outstandingElement.classList.add('outstanding');
-    } else {
-        outstandingElement.classList.remove('outstanding');
-        outstandingElement.classList.add('deposit-paid');
+    if (outstandingElement) {
+        outstandingElement.innerText = order.outstandingAmount ? order.outstandingAmount.toLocaleString() + ' сум' : '0 сум';
+        if (order.outstandingAmount > 0) {
+            outstandingElement.classList.remove('deposit-paid');
+            outstandingElement.classList.add('outstanding');
+        } else {
+            outstandingElement.classList.remove('outstanding');
+            outstandingElement.classList.add('deposit-paid');
+        }
     }
 }
 
 // Функция для закрытия модального окна информации о заказе
 function closeOrderInfoModal() {
-    document.getElementById('orderInfoModal').style.display = 'none';
+    var modal = document.getElementById('orderInfoModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 // Функция для удаления заказа по его идентификатору
@@ -213,133 +174,387 @@ function deleteOrder(id) {
 
 // Функция для закрытия модального окна оформления заказа
 function closeFormModal() {
-    document.getElementById('formModal').style.display = 'none';
+    var formModal = document.getElementById('formModal');
+    if (formModal) {
+        formModal.style.display = 'none';
+        resetForm();
+        currentStep = 1;
+        showStep(currentStep);
+    }
 }
 
 // Функция для открытия модального окна оформления заказа
 function openOrderForm() {
-    document.getElementById('formModal').style.display = 'flex'; // Изменено на 'flex' для правильного центрирования
-    document.getElementById('newOrderForm').reset(); // Сброс формы при открытии
+    var formModal = document.getElementById('formModal');
+    if (formModal) {
+        formModal.style.display = 'flex'; // Изменено на 'flex' для правильного центрирования
+        resetForm();
+        currentStep = 1;
+        showStep(currentStep);
+    }
 }
 
-// Функция для поиска заказов по тексту в поле поиска
-function searchOrders() {
-    var query = document.getElementById('searchInput').value.toLowerCase(); // Получаем поисковый запрос
-    var orders = document.querySelectorAll('.order'); // Находим все заказы
+// Функция для сброса формы
+function resetForm() {
+    var form = document.getElementById('newOrderForm');
+    if (form) {
+        form.reset();
+    }
 
-    orders.forEach(function(orderElement) {
-        // Проверяем наличие текста из поискового запроса в каждом заказе
-        if (orderElement.innerText.toLowerCase().includes(query)) {
-            orderElement.style.display = 'block'; // Показываем заказы, которые совпадают с запросом
-        } else {
-            orderElement.style.display = 'none'; // Скрываем неподходящие заказы
-        }
+    var bankDetails = document.getElementById('bankDetails');
+    if (bankDetails) {
+        bankDetails.style.display = 'none';
+    }
+
+    // Сброс стилей валидации
+    var inputs = document.querySelectorAll('#newOrderForm input, #newOrderForm select, #newOrderForm textarea');
+    inputs.forEach(function(input) {
+        input.classList.remove('invalid');
     });
-}
 
-// Функция для фильтрации заказов по статусу
-function filterOrders() {
-    var filter = document.getElementById('filterStatus').value; // Получаем выбранный фильтр
-    var orders = document.querySelectorAll('.order'); // Находим все заказы
+    // Сброс прогресс-бара
+    var progressBarFill = document.getElementById('progressBarFill');
+    if (progressBarFill) {
+        progressBarFill.style.width = '33%';
+    }
 
-    orders.forEach(function(orderElement) {
-        // Проверяем соответствие статуса
-        if (filter === 'all') {
-            orderElement.style.display = 'block'; // Показываем все заказы
-        } else {
-            // Определяем статус заказа
-            var status = orderElement.parentElement.parentElement.id.includes('waiting') ? 'waiting' : 'completed';
-            if (status === filter) {
-                orderElement.style.display = 'block'; // Показываем заказы с нужным статусом
+    // Удаление всех дополнительных размеров кроме первого
+    var sizesContainer = document.getElementById('sizesContainer');
+    if (sizesContainer) {
+        var sizeEntries = sizesContainer.querySelectorAll('.size-entry');
+        sizeEntries.forEach(function(entry, index) {
+            if (index > 0) {
+                sizesContainer.removeChild(entry);
             } else {
-                orderElement.style.display = 'none'; // Скрываем остальные
+                // Очистка значений первого блока
+                var selects = entry.querySelectorAll('select.size-select');
+                selects.forEach(function(select) {
+                    select.selectedIndex = 0;
+                });
+                var lengthInputs = entry.querySelectorAll('input.length-input');
+                lengthInputs.forEach(function(input) {
+                    input.value = '';
+                });
+                var quantityInputs = entry.querySelectorAll('input.quantity-input');
+                quantityInputs.forEach(function(input) {
+                    input.value = '';
+                });
             }
-        }
-    });
+        });
+    }
+
+    // Показать первый шаг
+    var firstStep = document.getElementById('step-1');
+    if (firstStep) {
+        firstStep.style.display = 'block';
+    }
 }
 
-// Функция для сортировки заказов по дате дедлайна
-function sortOrders() {
-    var sort = document.getElementById('sortOrders').value; // Получаем выбранную сортировку
+// Функция для добавления нового блока размера
+function addSizeEntry() {
+    var sizesContainer = document.getElementById('sizesContainer');
+    if (!sizesContainer) return;
 
-    db.ref('orders').once('value', function(snapshot) {
-        var ordersArray = [];
+    var sizeEntry = document.createElement('div');
+    sizeEntry.classList.add('size-entry');
+
+    sizeEntry.innerHTML = `
+        <div class="form-group">
+            <label>Размер бетона по ширине:</label>
+            <select name="size" class="size-select" required>
+                <option value="" disabled selected>Выберите размер бетона по ширине</option>
+                <option value="1m">1 метр</option>
+                <option value="1.20m">1.20 метра</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Размер бетона по длине (метры):</label>
+            <input type="number" name="length" class="length-input" step="0.1" min="0.1" max="10" required>
+        </div>
+        <div class="form-group">
+            <label>Количество:</label>
+            <input type="number" name="quantity" class="quantity-input" min="1" required>
+        </div>
+        <button type="button" class="btn-remove" onclick="removeSizeEntry(this)">Удалить</button>
+    `;
+
+    sizesContainer.appendChild(sizeEntry);
+}
+
+// Функция для удаления блока размера
+function removeSizeEntry(button) {
+    var sizeEntry = button.parentElement;
+    if (sizeEntry) {
+        var sizesContainer = document.getElementById('sizesContainer');
+        if (sizesContainer) {
+            sizesContainer.removeChild(sizeEntry);
+        }
+    }
+}
+
+// Функция для отображения предварительного просмотра заказа (опционально)
+function previewOrder() {
+    // Собираем данные из формы и отображаем их в модальном окне
+    var name = document.getElementById('name') ? document.getElementById('name').value.trim() : '';
+    var phone = document.getElementById('phone') ? document.getElementById('phone').value.trim() : '';
+    var company = document.getElementById('company') ? document.getElementById('company').value.trim() : '';
+    
+    // Собираем размеры
+    var sizeEntries = document.querySelectorAll('.size-entry');
+    var sizesInfo = '';
+    sizeEntries.forEach(function(entry, index) {
+        var sizeSelect = entry.querySelector('select.size-select');
+        var size = sizeSelect ? sizeSelect.value : '';
+        var lengthInput = entry.querySelector('input.length-input');
+        var length = lengthInput ? lengthInput.value : '';
+        var quantityInput = entry.querySelector('input.quantity-input');
+        var quantity = quantityInput ? quantityInput.value : '';
+
+        sizesInfo += `<strong>Размер ${index + 1} по ширине:</strong> ${size || 'Не указано'}<br>`;
+        sizesInfo += `<strong>Размер ${index + 1} по длине:</strong> ${length ? parseFloat(length).toFixed(2) + ' м' : 'Не указано'}<br>`;
+        sizesInfo += `<strong>Количество ${index + 1}:</strong> ${quantity || 'Не указано'}<br><br>`;
+    });
+
+    var paymentType = document.getElementById('paymentType') ? document.getElementById('paymentType').value : '';
+    var bankAccount = (paymentType === 'bank' && document.getElementById('bankAccount')) ? document.getElementById('bankAccount').value.trim() : '';
+    var totalAmount = document.getElementById('totalAmount') ? document.getElementById('totalAmount').value : '';
+    var depositAmount = document.getElementById('depositAmount') ? document.getElementById('depositAmount').value : '';
+    var note = document.getElementById('note') ? document.getElementById('note').value.trim() : '';
+    var deadline = document.getElementById('deadline') ? document.getElementById('deadline').value : '';
+
+    var previewContent = `
+        <strong>Имя:</strong> ${name || 'Не указано'}<br>
+        <strong>Телефон:</strong> ${phone || 'Не указано'}<br>
+        <strong>Компания:</strong> ${company || 'Не указано'}<br>
+        ${sizesInfo}
+        <strong>Тип оплаты:</strong> ${getPaymentTypeText(paymentType)}<br>
+        ${paymentType === 'bank' ? '<strong>Номер банковского счета:</strong> ' + (bankAccount || 'Не указано') + '<br>' : ''}
+        <strong>Итого сумма:</strong> ${totalAmount ? parseFloat(totalAmount).toLocaleString() : '0'} сум<br>
+        <strong>Залог:</strong> ${depositAmount ? parseFloat(depositAmount).toLocaleString() : '0'} сум<br>
+        <strong>Примечание:</strong> ${note || 'Нет'}<br>
+        <strong>Срок выполнения:</strong> ${deadline ? new Date(deadline).toLocaleDateString() : 'Не указано'}<br>
+    `;
+    var orderPreview = document.getElementById('orderPreview');
+    if (orderPreview) {
+        orderPreview.innerHTML = previewContent;
+    }
+
+    var previewModal = document.getElementById('previewModal');
+    if (previewModal) {
+        previewModal.style.display = 'flex';
+    }
+}
+
+// Функция для переключения отображения банковских реквизитов
+function toggleBankDetails() {
+    var paymentTypeElement = document.getElementById('paymentType');
+    var bankDetails = document.getElementById('bankDetails');
+    if (!paymentTypeElement || !bankDetails) return;
+
+    var paymentType = paymentTypeElement.value;
+    if (paymentType === 'bank') {
+        bankDetails.style.display = 'block';
+    } else {
+        bankDetails.style.display = 'none';
+    }
+}
+
+// Обработка отправки формы нового заказа
+document.getElementById('newOrderForm').addEventListener('submit', function(event) {
+    event.preventDefault(); // Предотвращаем перезагрузку страницы при отправке формы
+
+    // Валидация всех шагов перед отправкой
+    var isValid = true;
+    for (var i = 1; i <= totalSteps; i++) {
+        var stepElement = document.getElementById('step-' + i);
+        if (!stepElement) continue;
+
+        var inputs = stepElement.querySelectorAll('input, select, textarea');
+        inputs.forEach(function(input) {
+            if (!input.checkValidity()) {
+                input.classList.add('invalid');
+                isValid = false;
+            } else {
+                input.classList.remove('invalid');
+            }
+        });
+    }
+
+    if (!isValid) {
+        alert('Пожалуйста, заполните все обязательные поля корректно.');
+        return;
+    }
+
+    // Получаем значения из формы, проверяя наличие элементов
+    var name = document.getElementById('name') ? document.getElementById('name').value.trim() : '';
+    var phone = document.getElementById('phone') ? document.getElementById('phone').value.trim() : '';
+    var company = document.getElementById('company') ? document.getElementById('company').value.trim() : '';
+    
+    // Собираем размеры
+    var sizeEntries = document.querySelectorAll('.size-entry');
+    var sizes = [];
+    sizeEntries.forEach(function(entry) {
+        var sizeSelect = entry.querySelector('select.size-select');
+        var size = sizeSelect ? sizeSelect.value : '';
+        var lengthInput = entry.querySelector('input.length-input');
+        var length = lengthInput ? parseFloat(lengthInput.value) : 0;
+        var quantityInput = entry.querySelector('input.quantity-input');
+        var quantity = quantityInput ? parseInt(quantityInput.value) : 0;
+
+        if (size && length > 0 && quantity > 0) {
+            sizes.push({
+                size: size,
+                length: length,
+                quantity: quantity
+            });
+        }
+    });
+
+    var paymentType = document.getElementById('paymentType') ? document.getElementById('paymentType').value : '';
+    var bankAccount = (paymentType === 'bank' && document.getElementById('bankAccount')) ? document.getElementById('bankAccount').value.trim() : '';
+    var totalAmount = document.getElementById('totalAmount') ? parseFloat(document.getElementById('totalAmount').value) : 0;
+    var depositAmount = document.getElementById('depositAmount') ? parseFloat(document.getElementById('depositAmount').value) : 0;
+    var note = document.getElementById('note') ? document.getElementById('note').value.trim() : '';
+    var deadline = document.getElementById('deadline') ? document.getElementById('deadline').value : '';
+
+    // Проверка, чтобы залог не превышал общую сумму
+    if (depositAmount > totalAmount) {
+        alert('Залог не может превышать общую сумму заказа.');
+        return;
+    }
+
+    var depositPercentage = totalAmount > 0 ? ((depositAmount / totalAmount) * 100).toFixed(2) : '0.00';
+    var outstandingAmount = totalAmount - depositAmount;
+
+    var order = {
+        name: name,
+        phone: phone,
+        company: company,
+        sizes: sizes, // Массив размеров
+        paymentType: paymentType,
+        bankAccount: bankAccount,
+        totalAmount: totalAmount,
+        depositAmount: depositAmount,
+        depositPercentage: depositPercentage,
+        outstandingAmount: outstandingAmount,
+        note: note,
+        deadline: deadline, // Храним как строку в формате "YYYY-MM-DD"
+        status: 'waiting', // Статус по умолчанию "ожидание"
+        createdAt: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    // Сохраняем заказ в Realtime Database
+    db.ref('orders').push(order, function(error) {
+        if (error) {
+            console.error("Ошибка при добавлении заказа: ", error);
+            alert("Произошла ошибка при добавлении заказа. Пожалуйста, попробуйте еще раз.");
+        } else {
+            closeFormModal();
+            alert("Заказ успешно оформлен!");
+        }
+    });
+});
+
+// Функция для создания элемента заказа
+function createOrderDiv(order) {
+    if (!order) return null;
+
+    var orderDiv = document.createElement('div');
+    orderDiv.classList.add('order');
+    orderDiv.innerText = order.company + ' - ' + order.name;
+
+    // Кнопка удаления заказа
+    var deleteBtn = document.createElement('button');
+    deleteBtn.innerHTML = 'X';
+    deleteBtn.onclick = function(event) {
+        event.stopPropagation(); // Останавливаем всплытие события
+        deleteOrder(order.id); // Вызов функции удаления заказа
+    };
+    orderDiv.appendChild(deleteBtn);
+
+    // Расчет оставшихся дней до дедлайна
+    var now = new Date();
+    var deadlineDate = new Date(order.deadline);
+    var daysLeft = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24)); // Количество оставшихся дней
+
+    // Применение классов в зависимости от оставшегося времени до дедлайна
+    if (daysLeft <= 5 && daysLeft > 2) {
+        orderDiv.classList.add('blink-yellow'); // Мигает желтым, если осталось менее 5 дней
+    } else if (daysLeft <= 2 && daysLeft > 0) {
+        orderDiv.classList.add('blink-red'); // Мигает красным, если осталось менее 2 дней
+    } else if (daysLeft <= 0) {
+        orderDiv.classList.add('blink-maroon'); // Мигает темно-красным, если срок истек
+    }
+
+    // Открытие модального окна с информацией о заказе при клике на заказ
+    orderDiv.onclick = function() {
+        showOrderInfo(order);
+    };
+
+    return orderDiv;
+}
+
+// Функция для отображения всех заказов на странице
+function renderOrders() {
+    // Очищаем все контейнеры перед загрузкой
+    var waiting1m = document.getElementById('waiting-1m-orders');
+    var waiting1_20m = document.getElementById('waiting-1.20m-orders');
+    var completed1m = document.getElementById('completed-1m-orders');
+    var completed1_20m = document.getElementById('completed-1.20m-orders');
+
+    if (waiting1m) waiting1m.innerHTML = '';
+    if (waiting1_20m) waiting1_20m.innerHTML = '';
+    if (completed1m) completed1m.innerHTML = '';
+    if (completed1_20m) completed1_20m.innerHTML = '';
+
+    db.ref('orders').on('value', function(snapshot) {
+        if (waiting1m) waiting1m.innerHTML = '';
+        if (waiting1_20m) waiting1_20m.innerHTML = '';
+        if (completed1m) completed1m.innerHTML = '';
+        if (completed1_20m) completed1_20m.innerHTML = '';
+
         snapshot.forEach(function(childSnapshot) {
             var order = childSnapshot.val();
-            order.id = childSnapshot.key;
-            ordersArray.push(order);
-        });
+            order.id = childSnapshot.key; // Получаем уникальный ключ заказа
 
-        // Сортировка массива заказов по дате дедлайна
-        if (sort === 'dateAsc') {
-            ordersArray.sort(function(a, b) {
-                return new Date(a.deadline) - new Date(b.deadline);
-            });
-        } else if (sort === 'dateDesc') {
-            ordersArray.sort(function(a, b) {
-                return new Date(b.deadline) - new Date(a.deadline);
-            });
-        }
-
-        // Очищаем все контейнеры
-        document.getElementById('waiting-1m-orders').innerHTML = '';
-        document.getElementById('waiting-1.20m-orders').innerHTML = '';
-        document.getElementById('completed-1m-orders').innerHTML = '';
-        document.getElementById('completed-1.20m-orders').innerHTML = '';
-
-        // Отображаем отсортированные заказы
-        ordersArray.forEach(function(order) {
-            var orderDiv = document.createElement('div');
-            orderDiv.classList.add('order');
-            orderDiv.innerText = order.company + ' - ' + order.name;
-
-            // Кнопка удаления заказа
-            var deleteBtn = document.createElement('button');
-            deleteBtn.innerHTML = 'X';
-            deleteBtn.onclick = function(event) {
-                event.stopPropagation(); // Останавливаем всплытие события
-                deleteOrder(order.id); // Вызов функции удаления заказа
-            };
-            orderDiv.appendChild(deleteBtn);
-
-            // Расчет оставшихся дней до дедлайна
-            var now = new Date();
-            var deadlineDate = new Date(order.deadline);
-            var daysLeft = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24)); // Количество оставшихся дней
-
-            // Применение классов в зависимости от оставшегося времени до дедлайна
-            if (daysLeft <= 5 && daysLeft > 2) {
-                orderDiv.classList.add('blink-yellow'); // Мигает желтым, если осталось менее 5 дней
-            } else if (daysLeft <= 2 && daysLeft > 0) {
-                orderDiv.classList.add('blink-red'); // Мигает красным, если осталось менее 2 дней
-            } else if (daysLeft <= 0) {
-                orderDiv.classList.add('blink-maroon'); // Мигает темно-красным, если срок истек
-            }
-
-            // Открытие модального окна с информацией о заказе при клике на заказ
-            orderDiv.onclick = function() {
-                showOrderInfo(order);
-            };
+            var orderDiv = createOrderDiv(order);
+            if (!orderDiv) return;
 
             // Определение куда добавить заказ в зависимости от статуса и размера
             if (order.status === 'waiting') {
-                if (order.size === '1m') {
-                    document.getElementById('waiting-1m-orders').appendChild(orderDiv);
-                } else if (order.size === '1.20m') {
-                    document.getElementById('waiting-1.20m-orders').appendChild(orderDiv);
+                if (order.sizes && order.sizes.some(s => s.size === '1m')) {
+                    if (waiting1m) waiting1m.appendChild(orderDiv);
+                }
+                if (order.sizes && order.sizes.some(s => s.size === '1.20m')) {
+                    if (waiting1_20m) waiting1_20m.appendChild(orderDiv);
                 }
             } else if (order.status === 'completed') {
-                if (order.size === '1m') {
-                    document.getElementById('completed-1m-orders').appendChild(orderDiv);
-                } else if (order.size === '1.20m') {
-                    document.getElementById('completed-1.20m-orders').appendChild(orderDiv);
+                if (order.sizes && order.sizes.some(s => s.size === '1m')) {
+                    if (completed1m) completed1m.appendChild(orderDiv);
+                }
+                if (order.sizes && order.sizes.some(s => s.size === '1.20m')) {
+                    if (completed1_20m) completed1_20m.appendChild(orderDiv);
                 }
             }
         });
     });
 }
 
-// Сразу отображаем заказы при загрузке страницы
+// Функция для сохранения заказа в избранное (опционально)
+function saveToFavorites() {
+    // Логика для сохранения текущего заказа в "Избранное"
+    alert('Заказ сохранен в Избранное!');
+}
+
+// Функция для закрытия модального окна предварительного просмотра (опционально)
+function closePreviewModal() {
+    var previewModal = document.getElementById('previewModal');
+    if (previewModal) {
+        previewModal.style.display = 'none';
+    }
+}
+
+// Событие загрузки страницы
 window.onload = function() {
     renderOrders(); // Отображаем все заказы из Realtime Database
 };

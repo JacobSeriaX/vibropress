@@ -197,6 +197,103 @@ h1 {
     transform: translateY(-2px);
 }
 
+.btn-next,
+.btn-back,
+.btn-submit,
+.btn-reset,
+.btn-close,
+.btn-favorite,
+.btn-remove,
+.btn-add {
+    padding: 10px 20px;
+    margin: 5px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.btn-next {
+    background-color: #28a745; /* Зеленый цвет */
+    color: white;
+}
+
+.btn-next:hover {
+    background-color: #218838; /* Темно-зеленый цвет */
+    transform: translateY(-2px);
+}
+
+.btn-back {
+    background-color: #6c757d; /* Серый цвет */
+    color: white;
+}
+
+.btn-back:hover {
+    background-color: #5a6268; /* Темно-серый цвет */
+    transform: translateY(-2px);
+}
+
+.btn-submit {
+    background-color: #007BFF; /* Синий цвет */
+    color: white;
+}
+
+.btn-submit:hover {
+    background-color: #0056b3; /* Темно-синий цвет */
+    transform: translateY(-2px);
+}
+
+.btn-reset {
+    background-color: #ffc107; /* Желтый цвет */
+    color: white;
+}
+
+.btn-reset:hover {
+    background-color: #e0a800; /* Темно-желтый цвет */
+    transform: translateY(-2px);
+}
+
+.btn-close {
+    background-color: #dc3545; /* Красный цвет */
+    color: white;
+}
+
+.btn-close:hover {
+    background-color: #c82333; /* Темно-красный цвет */
+    transform: translateY(-2px);
+}
+
+.btn-favorite {
+    background-color: #17a2b8; /* Бирюзовый цвет */
+    color: white;
+}
+
+.btn-favorite:hover {
+    background-color: #138496; /* Темно-бирюзовый цвет */
+    transform: translateY(-2px);
+}
+
+.btn-remove {
+    background-color: #dc3545; /* Красный цвет */
+    color: white;
+}
+
+.btn-remove:hover {
+    background-color: #c82333; /* Темно-красный цвет */
+    transform: translateY(-2px);
+}
+
+.btn-add {
+    background-color: #28a745; /* Зеленый цвет */
+    color: white;
+}
+
+.btn-add:hover {
+    background-color: #218838; /* Темно-зеленый цвет */
+    transform: translateY(-2px);
+}
+
 /* Модальные окна */
 .modal {
     display: none;
@@ -240,6 +337,23 @@ h1 {
     color: #0056b3; /* Темно-синий цвет при наведении */
 }
 
+/* Прогресс-бар */
+.progress-bar {
+    width: 100%;
+    background-color: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    height: 20px;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background-color: #007BFF;
+    width: 0%;
+    transition: width 0.3s ease-in-out;
+}
+
 /* Стиль для отображения информации о заказе */
 .order-info {
     margin-bottom: 20px;
@@ -280,20 +394,25 @@ textarea {
     resize: vertical;
 }
 
-button.btn {
-    padding: 12px;
-    font-size: 18px;
-    background-color: #007BFF; /* Синий цвет */
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    width: 100%;
-    transition: background-color 0.3s;
+/* Стили для невалидных полей */
+input.invalid, select.invalid, textarea.invalid {
+    border: 2px solid red;
 }
 
-button.btn:hover {
-    background-color: #0056b3; /* Темно-синий цвет при наведении */
+/* Размеры для динамических элементов */
+.size-entry {
+    border: 1px solid #ccc;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.btn-remove {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
 }
 
 /* Анимации */
@@ -357,8 +476,24 @@ button.btn:hover {
         font-size: 14px;
     }
 
-    button.btn, .btn {
+    button.btn, 
+    .btn-next, 
+    .btn-back, 
+    .btn-submit, 
+    .btn-reset, 
+    .btn-close, 
+    .btn-favorite,
+    .btn-remove,
+    .btn-add {
         font-size: 16px;
         padding: 10px;
+    }
+
+    .progress-bar {
+        height: 15px;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
     }
 }
