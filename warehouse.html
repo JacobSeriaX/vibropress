@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Склад Vibro Press</title>
+    <link rel="stylesheet" href="main/styles.css">
+    <!-- Firebase SDK версии 8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</head>
+<body>
+    <header>
+        <img src="img/IMG_0244.PNG" alt="Логотип Завода Бетонов" class="logo">
+        <!-- Навигационная панель -->
+        <nav>
+            <ul>
+                <li><a href="index.html">Главная</a></li>
+                <li><a href="warehouse.html">Склад</a></li>
+            </ul>
+        </nav>
+    </header>
+    <h1>Склад с ИИ</h1>
+
+    <div class="warehouse-controls">
+        <button class="btn" onclick="openInventoryModal()">Добавить запас</button>
+    </div>
+
+    <!-- Раздел фильтрации -->
+    <div class="warehouse-filter">
+        <form id="filterForm">
+            <div class="form-group">
+                <label for="filterSizeWidth">Размер по ширине:</label>
+                <select id="filterSizeWidth">
+                    <option value="">Все</option>
+                    <option value="1m">1 метр</option>
+                    <option value="1.20m">1.20 метра</option>
+                    <!-- Добавьте другие размеры по необходимости -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="filterSizeLength">Размер по длине (метры):</label>
+                <input type="number" id="filterSizeLengthMin" placeholder="Мин." step="0.1" min="0.1" max="100">
+                <input type="number" id="filterSizeLengthMax" placeholder="Макс." step="0.1" min="0.1" max="100">
+            </div>
+            <div class="form-group">
+                <label for="filterQuantity">Количество:</label>
+                <input type="number" id="filterQuantityMin" placeholder="Мин." min="0">
+                <input type="number" id="filterQuantityMax" placeholder="Макс." min="0">
+            </div>
+            <div class="form-group">
+                <label for="filterStatus">Статус:</label>
+                <select id="filterStatus">
+                    <option value="">Все</option>
+                    <option value="Достаточно">Достаточно</option>
+                    <option value="У вас низкие запасы">Низкие запасы</option>
+                </select>
+            </div>
+            <div class="form-navigation">
+                <button type="button" class="btn-reset" onclick="resetFilters()">Сбросить</button>
+                <button type="submit" class="btn-submit">Применить фильтр</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="warehouse-container">
+        <table id="inventoryTable">
+            <thead>
+                <tr>
+                    <th>Размер по ширине</th>
+                    <th>Размер по длине</th>
+                    <th>Количество</th>
+                    <th>Статус</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Запасы будут загружаться динамически -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Модальное окно добавления/редактирования запаса -->
+    <div id="inventoryModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeInventoryModal()">&times;</span>
+            <h2 id="modalTitle">Добавить запас</h2>
+            <form id="inventoryForm">
+                <input type="hidden" id="inventoryId">
+                <div class="form-group">
+                    <label for="inventorySizeWidth">Размер бетона по ширине:</label>
+                    <select id="inventorySizeWidth" required>
+                        <option value="" disabled selected>Выберите размер по ширине</option>
+                        <option value="1m">1 метр</option>
+                        <option value="1.20m">1.20 метра</option>
+                        <!-- Добавьте другие размеры по необходимости -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="inventorySizeLength">Размер бетона по длине (метры):</label>
+                    <input type="number" id="inventorySizeLength" step="0.1" min="0.1" max="100" required>
+                </div>
+                <div class="form-group">
+                    <label for="inventoryQuantity">Количество:</label>
+                    <input type="number" id="inventoryQuantity" min="0" required>
+                </div>
+                <div class="form-navigation">
+                    <button type="button" class="btn-back" onclick="closeInventoryModal()">Отмена</button>
+                    <button type="submit" class="btn-submit">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Подключение warehouse.js -->
+    <script src="src/warehouse.js"></script>
+</body>
+</html>
