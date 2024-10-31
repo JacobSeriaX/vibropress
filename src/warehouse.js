@@ -244,6 +244,7 @@ window.onclick = function(event) {
     var modal = document.getElementById('inventoryModal');
     if (modal && event.target == modal) {
         modal.style.display = 'none';
+        resetInventoryForm();
     }
 }
 
