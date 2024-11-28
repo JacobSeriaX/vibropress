@@ -338,6 +338,52 @@ h1 {
     color: #0056b3; /* Темно-синий цвет при наведении */
 }
 
+/* Стили для модального окна отчетов */
+#reportsModal .modal-content {
+    width: 600px;
+    max-width: 90%;
+    padding: 20px;
+}
+
+#reportsModal .form-group {
+    margin-bottom: 20px;
+}
+
+#reportsModal .form-navigation {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+#reportsModal #reportsContent {
+    margin-top: 20px;
+}
+
+#reportsModal .flatpickr-calendar {
+    z-index: 10000; /* Повышаем z-index для отображения поверх других элементов */
+}
+
+/* Стили для таблицы отчетов */
+.reports-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.reports-table th, .reports-table td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: center;
+}
+
+.reports-table th {
+    background-color: #007BFF;
+    color: white;
+}
+
+.reports-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
 /* Прогресс-бар */
 .progress-bar {
     width: 100%;
@@ -380,8 +426,8 @@ h1 {
     margin-bottom: 5px;
 }
 
-.form-group input, 
-.form-group textarea, 
+.form-group input,
+.form-group textarea,
 .form-group select {
     padding: 10px;
     font-size: 16px;
@@ -408,11 +454,6 @@ input.invalid, select.invalid, textarea.invalid {
     margin-bottom: 15px;
     position: relative;
 }
-
-/* Удаляем стили для кнопки удаления */
-/* .btn-remove {
-    /* Эти стили больше не нужны */
-} */
 
 /* Анимации */
 @keyframes fadeIn {
@@ -469,18 +510,18 @@ input.invalid, select.invalid, textarea.invalid {
         font-size: 14px;
     }
 
-    .form-group input, 
-    .form-group textarea, 
+    .form-group input,
+    .form-group textarea,
     .form-group select {
         font-size: 14px;
     }
 
-    button.btn, 
-    .btn-next, 
-    .btn-back, 
-    .btn-submit, 
-    .btn-reset, 
-    .btn-close, 
+    button.btn,
+    .btn-next,
+    .btn-back,
+    .btn-submit,
+    .btn-reset,
+    .btn-close,
     .btn-favorite,
     .btn-add {
         font-size: 16px;
@@ -571,8 +612,6 @@ input.invalid, select.invalid, textarea.invalid {
         background-color: #c82333; /* Темно-красный при наведении */
     }
 
-    /* Модальные окна уже стилизованы ранее, можно использовать существующие стили */
-
     /* Стили для заданий на производство */
     .production-orders-container {
         width: 90%;
@@ -630,8 +669,15 @@ input.invalid, select.invalid, textarea.invalid {
 }
 
 .low-stock {
-    background-color: #f8d7da;
+    background-color: #ffe6e6;
     color: #721c24;
+    animation: blink-red 1s infinite;
+}
+
+/* Анимация мигания красным для низких запасов */
+@keyframes blink-red {
+    0%, 100% { background-color: #ffe6e6; }
+    50% { background-color: #fff; }
 }
 
 .modal-content form {
@@ -728,4 +774,9 @@ input.invalid, select.invalid, textarea.invalid {
 .btn-submit:hover {
     background-color: #0056b3; /* Темно-синий цвет */
     transform: translateY(-2px);
+}
+
+/* Стили для кнопки "Отчеты" */
+.warehouse-controls .btn {
+    margin-right: 10px;
 }

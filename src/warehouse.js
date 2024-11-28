@@ -22,7 +22,7 @@ const LOW_STOCK_THRESHOLD = 10;
 // Хранилище всех запасов
 let allInventory = [];
 
-// Функции для управления модальным окном
+// Функции для управления модальным окном добавления/редактирования запасов
 
 function openInventoryModal() {
     var modal = document.getElementById('inventoryModal');
@@ -38,6 +38,103 @@ function closeInventoryModal() {
         modal.style.display = 'none';
         resetInventoryForm();
     }
+}
+
+// Функции для управления модальным окном отчетов
+
+function openReportsModal() {
+    var modal = document.getElementById('reportsModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Инициализируем календарь при открытии модального окна
+        flatpickr("#reportDate", {
+            dateFormat: "Y-m-d",
+            maxDate: "today",
+            defaultDate: "today",
+            locale: {
+                firstDayOfWeek: 1,
+                weekdays: {
+                    shorthand: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+                    longhand: ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'],
+                },
+                months: {
+                    shorthand: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+                    longhand: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+                },
+            },
+        });
+
+        // Очищаем контент отчетов
+        var reportsContent = document.getElementById('reportsContent');
+        if (reportsContent) {
+            reportsContent.innerHTML = '';
+        }
+    }
+}
+
+function closeReportsModal() {
+    var modal = document.getElementById('reportsModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Функция для генерации отчета по выбранной дате
+function generateReport() {
+    var selectedDate = document.getElementById('reportDate').value;
+    if (!selectedDate) {
+        alert('Пожалуйста, выберите дату.');
+        return;
+    }
+
+    var reportsContent = document.getElementById('reportsContent');
+    if (!reportsContent) return;
+
+    // Преобразуем выбранную дату в формат начала и конца дня
+    var startOfDay = new Date(selectedDate + 'T00:00:00').getTime();
+    var endOfDay = new Date(selectedDate + 'T23:59:59').getTime();
+
+    db.ref('inventory').once('value', function(snapshot) {
+        var inventoryData = [];
+
+        snapshot.forEach(function(childSnapshot) {
+            var data = childSnapshot.val();
+            data.id = childSnapshot.key;
+
+            if (data.createdAt) {
+                var createdAt = data.createdAt;
+                if (createdAt >= startOfDay && createdAt <= endOfDay) {
+                    inventoryData.push(data);
+                }
+            }
+        });
+
+        // Если нет данных за выбранную дату
+        if (inventoryData.length === 0) {
+            reportsContent.innerHTML = '<p>Нет данных за выбранную дату.</p>';
+            return;
+        }
+
+        // Создаем таблицу для отображения отчетов
+        var reportsHtml = '';
+        reportsHtml += '<table class="reports-table">';
+        reportsHtml += '<thead><tr><th>Дата добавления</th><th>Размер по ширине</th><th>Размер по длине</th><th>Количество</th></tr></thead>';
+        reportsHtml += '<tbody>';
+
+        inventoryData.forEach(function(item) {
+            var dateAdded = new Date(item.createdAt).toLocaleString();
+            reportsHtml += '<tr>';
+            reportsHtml += '<td>' + dateAdded + '</td>';
+            reportsHtml += '<td>' + item.sizeWidth + '</td>';
+            reportsHtml += '<td>' + item.sizeLength + ' м</td>';
+            reportsHtml += '<td>' + item.quantity + '</td>';
+            reportsHtml += '</tr>';
+        });
+
+        reportsHtml += '</tbody></table>';
+
+        reportsContent.innerHTML = reportsHtml;
+    });
 }
 
 // Функция для сброса формы
@@ -71,7 +168,8 @@ document.getElementById('inventoryForm').addEventListener('submit', function(eve
         sizeWidth: sizeWidth,
         sizeLength: sizeLength,
         quantity: quantity,
-        status: status
+        status: status,
+        createdAt: firebase.database.ServerValue.TIMESTAMP
     };
 
     if (inventoryId) {
@@ -137,6 +235,11 @@ function createInventoryRow(id, inventory) {
     // Добавляем контейнер с кнопками в ячейку действий
     tdActions.appendChild(actionsContainer);
     tr.appendChild(tdActions);
+
+    // Проверяем статус запаса для применения стилей
+    if (inventory.status === 'У вас низкие запасы') {
+        tr.classList.add('low-stock');
+    }
 
     return tr;
 }
@@ -239,12 +342,18 @@ document.getElementById('filterForm').addEventListener('submit', function(event)
     displayInventory(filteredInventory);
 });
 
-// Закрытие модального окна при клике вне его
+// Закрытие модальных окон при клике вне их
 window.onclick = function(event) {
-    var modal = document.getElementById('inventoryModal');
-    if (modal && event.target == modal) {
-        modal.style.display = 'none';
+    var inventoryModal = document.getElementById('inventoryModal');
+    var reportsModal = document.getElementById('reportsModal');
+
+    if (inventoryModal && event.target == inventoryModal) {
+        inventoryModal.style.display = 'none';
         resetInventoryForm();
+    }
+
+    if (reportsModal && event.target == reportsModal) {
+        reportsModal.style.display = 'none';
     }
 }
 

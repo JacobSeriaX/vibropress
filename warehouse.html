@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Склад Vibro Press</title>
     <link rel="stylesheet" href="main/styles.css">
+    <!-- Подключение библиотеки для календаря -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.9/flatpickr.min.css">
     <!-- Firebase SDK версии 8 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -24,6 +26,7 @@
 
     <div class="warehouse-controls">
         <button class="btn" onclick="openInventoryModal()">Добавить запас</button>
+        <button class="btn" onclick="openReportsModal()">Отчеты</button>
     </div>
 
     <!-- Раздел фильтрации -->
@@ -35,7 +38,6 @@
                     <option value="">Все</option>
                     <option value="1m">1 метр</option>
                     <option value="1.20m">1.20 метра</option>
-                    <!-- Добавьте другие размеры по необходимости -->
                 </select>
             </div>
             <div class="form-group">
@@ -93,7 +95,6 @@
                         <option value="" disabled selected>Выберите размер по ширине</option>
                         <option value="1m">1 метр</option>
                         <option value="1.20m">1.20 метра</option>
-                        <!-- Добавьте другие размеры по необходимости -->
                     </select>
                 </div>
                 <div class="form-group">
@@ -112,6 +113,26 @@
         </div>
     </div>
 
+    <!-- Модальное окно отчетов -->
+    <div id="reportsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeReportsModal()">&times;</span>
+            <h2>Отчеты по складу</h2>
+            <div class="form-group">
+                <label for="reportDate">Выберите дату:</label>
+                <input type="text" id="reportDate" placeholder="Выберите дату" readonly>
+            </div>
+            <div class="form-navigation">
+                <button type="button" class="btn-submit" onclick="generateReport()">ОК</button>
+            </div>
+            <div id="reportsContent">
+                <!-- Отчеты будут загружаться динамически -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Подключение библиотек -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.9/flatpickr.min.js"></script>
     <!-- Подключение warehouse.js -->
     <script src="src/warehouse.js"></script>
 </body>
